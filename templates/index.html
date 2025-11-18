@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manipulation de fichiers Excel</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">Manipulation de fichiers Excel</h1>
+
+        <!-- Formulaire pour téléverser les fichiers et choisir les feuilles -->
+        <form method="POST" enctype="multipart/form-data" class="mb-4">
+            <!-- Fichier source -->
+            <div class="mb-3">
+                <label for="file" class="form-label">fichier Excel source :</label>
+                <input type="file" class="form-control" id="file" name="file" accept=".xlsx, .xls" required>
+            </div>
+
+            <div class="mb-3" id="sheet_selection" style="display: none;">
+                <label for="sheet_name" class="form-label">Choisissez une feuille source :</label>
+                <select class="form-select" id="sheet_name" name="sheet_name" required></select>
+            </div>
+
+            <!-- Fichier cible -->
+            <div class="mb-3">
+                <label for="file_target" class="form-label">fichier Excel cible :</label>
+                <input type="file" class="form-control" id="file_target" name="file_target" accept=".xlsx, .xls">
+            </div>
+
+            <div class="mb-3" id="sheet_selection_target" style="display: none;">
+                <label for="sheet_name_target" class="form-label">Choisissez une feuille cible :</label>
+                <select class="form-select" id="sheet_name_target" name="sheet_name_target"></select>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="submit_button" disabled>Téléverser</button>
+        </form>
+    </div>
+
+    <!-- jQuery et Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Script pour charger dynamiquement les feuilles pour les deux fichiers -->
+    <script>
+        function attachSheetLoader(fileInputSelector, sheetSelectSelector, sheetSectionSelector, enableSubmit) {
+            $(fileInputSelector).change(function() {
+                console.log("Fichier sélectionné sur", fileInputSelector);
+                var fileInput = $(fileInputSelector)[0];
+                var file = fileInput.files[0];
+                if (!file) {
+                    console.log("Aucun fichier sélectionné pour", fileInputSelector);
+                    return;
+                }
+
+                var formData = new FormData();
+                // IMPORTANT : le backend attend le champ "file"
+                formData.append('file', file);
+
+                $.ajax({
+                    url: '/get_sheets',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        console.log("Réponse du serveur pour", fileInputSelector, ":", response);
+                        if (response.error) {
+                            alert("Erreur : " + response.error);
+                            return;
+                        }
+
+                        var sheetSelect = $(sheetSelectSelector);
+                        sheetSelect.empty();
+
+                        response.sheet_names.forEach(function(sheet) {
+                            sheetSelect.append($('<option>', {
+                                value: sheet,
+                                text: sheet
+                            }));
+                        });
+
+                        $(sheetSectionSelector).show();
+
+                        if (enableSubmit) {
+                            $('#submit_button').prop('disabled', false);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.log("Erreur AJAX pour", fileInputSelector, ":", error);
+                        alert("Erreur lors de la lecture des feuilles : " + error);
+                    }
+                });
+            });
+        }
+
+        $(document).ready(function() {
+            console.log("Document prêt.");
+
+            // Fichier source : active aussi le bouton "Téléverser"
+            attachSheetLoader('#file', '#sheet_name', '#sheet_selection', true);
+
+            // Fichier cible : uniquement liste déroulante, sans toucher au bouton
+            attachSheetLoader('#file_target', '#sheet_name_target', '#sheet_selection_target', false);
+        });
+    </script>
+</body>
+</html>
