@@ -4,7 +4,7 @@ import os
 import traceback
 
 # <-- importe ton script de logique ici (adapter le nom du fichier / fonction) -->
-import mon_script  # par ex. mon_script.py dans le même dossier que app.py
+from logic import apply_colors_to_file2
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads/'
@@ -44,21 +44,14 @@ def index():
             # ----- APPEL DE TON SCRIPT PYTHON DE LOGIQUE -----
             # Ici tu appelles la fonction qui fait le vrai travail sur les Excels
             # À adapter en fonction de la signature réelle de ta fonction
-            #todo chemin_fichier_modifie =  insèrer la methode pour modifier le fichier excel
-
-            # Option 1 : proposer directement le téléchargement du résultat
-            return send_file(
-                chemin_fichier_modifie,
-                as_attachment=True,
-                download_name=os.path.basename(chemin_fichier_modifie)
-            )
+            apply_colors_to_file2(file1_path=file_source,file1_sheet=sheet_source,file2_path=file_target,file2_sheet=sheet_target)
 
             # Option 2 (alternative) : afficher un message / une page
-            message = f"Traitement terminé. Fichier généré : {os.path.basename(chemin_fichier_modifie)}"
+            message = f"Traitement terminé. Fichier généré : {os.path.basename(file_target)}"
             return render_template(
                 'result.html',
                 message=message,
-                chemin_fichier_modifie=chemin_fichier_modifie
+                chemin_fichier_modifie=file_target
             )
 
         return render_template('index.html', table=None, filename=None, sheet_name=None)
