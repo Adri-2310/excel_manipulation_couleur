@@ -1,7 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify
+from flask import Flask, render_template, request, jsonify, after_this_request
 import pandas as pd
 import os
+import glob
 import traceback
+from flask import send_from_directory
 
 # <-- importe ton script de logique ici (adapter le nom du fichier / fonction) -->
 from logic import apply_colors_to_file2
@@ -40,18 +42,17 @@ def index():
             sheet_target = request.form.get('sheet_name_target')
             if not sheet_target:
                 return "Aucune feuille cible sélectionnée.", 400
-
             # ----- APPEL DE TON SCRIPT PYTHON DE LOGIQUE -----
             # Ici tu appelles la fonction qui fait le vrai travail sur les Excels
             # À adapter en fonction de la signature réelle de ta fonction
             apply_colors_to_file2(file1_path=file_source,file1_sheet=sheet_source,file2_path=file_target,file2_sheet=sheet_target)
 
             # Option 2 (alternative) : afficher un message / une page
-            message = f"Traitement terminé. Fichier généré : {os.path.basename(file_target)}"
+            message = f"Traitement terminé."
             return render_template(
-                'result.html',
+                'resultat.html',
                 message=message,
-                chemin_fichier_modifie=file_target
+                chemin_fichier_modifie=os.path.basename(target_path),
             )
 
         return render_template('index.html', table=None, filename=None, sheet_name=None)
@@ -76,31 +77,11 @@ def get_sheets():
         print(f"Erreur dans get_sheets: {traceback.format_exc()}")
         return jsonify({'error': f'Erreur lors de la lecture du fichier : {str(e)}'}), 500
 
-@app.route('/download/<filename>')
+@app.route('/download/<filename>', methods=['GET'])
 def download(filename):
-    try:
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        sheet_name = request.args.get('sheet_name')
-        if not sheet_name:
-            return "Aucune feuille spécifiée pour le téléchargement.", 400
+    # Envoie le fichier demandé
+    return send_from_directory('uploads', filename)
 
-        df = pd.read_excel(filepath, sheet_name=sheet_name)
-
-        if 'Total' not in df.columns:
-            df['Total'] = df.sum(axis=1)
-
-        modified_filepath = os.path.join(app.config['UPLOAD_FOLDER'], f'modified_{filename}')
-        with pd.ExcelWriter(modified_filepath, engine='openpyxl') as writer:
-            df.to_excel(writer, sheet_name=sheet_name, index=False)
-
-        return send_file(
-            modified_filepath,
-            as_attachment=True,
-            download_name=f'modified_{filename}'
-        )
-    except Exception as e:
-        print(f"Erreur dans download: {traceback.format_exc()}")
-        return f"Une erreur est survenue : {str(e)}", 500
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -140,16 +140,4 @@ def apply_colors_to_file2(file1_path: str, file1_sheet: str, file2_path: str, fi
 
     # Sauvegarder les modifications
     workbook.save(file2_path)
-    print(f"Les couleurs ont été appliquées aux colonnes A, B et C du fichier {file2_path}, feuille '{file2_sheet}'.")
 
-# Exemple d'utilisation
-if __name__ == "__main__":
-    # Fichier 1 : Source des couleurs
-    file1_path = "fichier 1.xlsx"
-    file1_sheet = "resultat test"
-
-    # Fichier 2 : Destination des couleurs
-    file2_path = "fichier 2.xlsx"
-    file2_sheet = "depart test"  # Remplacez par le nom de votre feuille
-
-    apply_colors_to_file2(file1_path, file1_sheet, file2_path, file2_sheet)
