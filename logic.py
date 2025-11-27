@@ -4,15 +4,15 @@ from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
 import os
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 def hex_to_rvb(hex_color: str) -> tuple:
     if hex_color is None:
         return None
-
     if hex_color.startswith("FF"):
         hex_color = hex_color[2:]
-
     try:
         r = int(hex_color[0:2], 16)
         v = int(hex_color[2:4], 16)
@@ -22,13 +22,12 @@ def hex_to_rvb(hex_color: str) -> tuple:
         logger.warning("Code couleur hex invalide : %s", hex_color, exc_info=True)
         return None
 
+
 def extract_theme_colors(file_path: str) -> dict:
     theme_colors = {}
-
     if not os.path.exists(file_path):
         logger.error("Fichier thème introuvable : %s", file_path)
         return theme_colors
-
     try:
         with zipfile.ZipFile(file_path, 'r') as zip_ref:
             if 'xl/theme/theme1.xml' not in zip_ref.namelist():
@@ -45,8 +44,34 @@ def extract_theme_colors(file_path: str) -> dict:
                             theme_colors[i] = rgb.attrib['val']
     except Exception:
         logger.error("Erreur lors de l'extraction des couleurs du thème", exc_info=True)
-
     return theme_colors
+
+
+def _find_columns_by_header(sheet, headers_wanted):
+    """
+    sheet : feuille openpyxl
+    headers_wanted : dict {nom_logique: [liste de textes possibles dans la cellule]}
+    retourne : dict {nom_logique: index_colonne (0‑based)} ou None si manquant
+    """
+    header_row = next(sheet.iter_rows(min_row=1, max_row=1, values_only=True))
+    indices = {}
+
+    for logical_name, candidates in headers_wanted.items():
+        idx = None
+        for i, cell_value in enumerate(header_row):
+            if cell_value is None:
+                continue
+            cell_text = str(cell_value).strip().lower()
+            if cell_text in candidates:
+                idx = i
+                break
+        if idx is None:
+            logger.error("Colonne '%s' introuvable dans l'en‑tête : %s", logical_name, header_row)
+            return None
+        indices[logical_name] = idx
+
+    return indices
+
 
 def get_implantation_colors(file_path: str, sheet_name: str) -> dict:
     if not os.path.exists(file_path):
@@ -67,20 +92,38 @@ def get_implantation_colors(file_path: str, sheet_name: str) -> dict:
 
         sheet = workbook[sheet_name]
 
+        # Recherche dynamique des colonnes
+        col_indices = _find_columns_by_header(
+            sheet,
+            {
+                "implantation": ["implantation"],
+                "nom": ["nom"],
+                "prenom": ["prénom", "prenom"],
+            },
+        )
+        if col_indices is None:
+            return {}
+
+        idx_impl = col_indices["implantation"]
+        idx_nom = col_indices["nom"]
+        idx_prenom = col_indices["prenom"]
+
         data_colors = {}
-        for row in sheet.iter_rows(min_row=2, min_col=1, max_col=3):
-            implantation = row[0].value
-            nom = row[1].value
-            prenom = row[2].value
+
+        # on parcourt à partir de la 2e ligne (1 = en‑tête)
+        for row in sheet.iter_rows(min_row=2):
+            implantation = row[idx_impl].value
+            nom = row[idx_nom].value
+            prenom = row[idx_prenom].value
 
             if implantation is None or nom is None or prenom is None:
                 continue
 
             key = (implantation, nom, prenom)
-            cell_a = row[0]
 
-            if cell_a.fill and cell_a.fill.fill_type != "none":
-                bg_color = cell_a.fill.fgColor
+            cell_impl = row[idx_impl]
+            if cell_impl.fill and cell_impl.fill.fill_type != "none":
+                bg_color = cell_impl.fill.fgColor
                 rvb_color = None
 
                 if bg_color.type == "rgb":
@@ -89,7 +132,8 @@ def get_implantation_colors(file_path: str, sheet_name: str) -> dict:
                     hex_color = theme_colors.get(bg_color.theme)
                     rvb_color = hex_to_rvb(hex_color)
 
-                if rvb_color:
+                # Ignorer les couleurs noires ou nulles
+                if rvb_color and rvb_color != (0, 0, 0):
                     data_colors[key] = rvb_color
 
         return data_colors
@@ -98,6 +142,7 @@ def get_implantation_colors(file_path: str, sheet_name: str) -> dict:
         return {}
     finally:
         workbook.close()
+
 
 def apply_colors_to_file2(file1_path: str, file1_sheet: str, file2_path: str, file2_sheet: str) -> None:
     if not os.path.exists(file2_path):
@@ -119,10 +164,26 @@ def apply_colors_to_file2(file1_path: str, file1_sheet: str, file2_path: str, fi
 
         sheet = workbook[file2_sheet]
 
-        for row in sheet.iter_rows(min_row=2, min_col=1, max_col=3):
-            implantation = row[0].value
-            nom = row[1].value
-            prenom = row[2].value
+        # même logique : trouver les colonnes Implantation/Nom/Prénom dans le fichier 2
+        col_indices = _find_columns_by_header(
+            sheet,
+            {
+                "implantation": ["implantation"],
+                "nom": ["nom"],
+                "prenom": ["prénom", "prenom"],
+            },
+        )
+        if col_indices is None:
+            return
+
+        idx_impl = col_indices["implantation"]
+        idx_nom = col_indices["nom"]
+        idx_prenom = col_indices["prenom"]
+
+        for row in sheet.iter_rows(min_row=2):
+            implantation = row[idx_impl].value
+            nom = row[idx_nom].value
+            prenom = row[idx_prenom].value
 
             if implantation is None or nom is None or prenom is None:
                 continue
@@ -134,8 +195,9 @@ def apply_colors_to_file2(file1_path: str, file1_sheet: str, file2_path: str, fi
                 fill = PatternFill(
                     start_color=f"{rvb_color[0]:02X}{rvb_color[1]:02X}{rvb_color[2]:02X}",
                     end_color=f"{rvb_color[0]:02X}{rvb_color[1]:02X}{rvb_color[2]:02X}",
-                    fill_type="solid"
+                    fill_type="solid",
                 )
+                # applique la couleur sur toute la ligne (ou seulement les 3 colonnes si tu préfères)
                 for cell in row:
                     cell.fill = fill
 
@@ -144,4 +206,3 @@ def apply_colors_to_file2(file1_path: str, file1_sheet: str, file2_path: str, fi
         logger.error("Erreur lors de l'application des couleurs au fichier cible", exc_info=True)
     finally:
         workbook.close()
-
