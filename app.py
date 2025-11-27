@@ -4,7 +4,6 @@ import os
 import time
 import glob
 import threading
-import traceback
 from flask import send_from_directory
 import logging
 from logging.handlers import RotatingFileHandler
