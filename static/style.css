@@ -1,22 +1,49 @@
+/* Couleur de fond globale */
 body {
-    background-color: #f8f9fa;
+    background-color: #f4f6f9;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+/* Carte principale */
 .card {
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+    border: none;
 }
 
+/* En-tête de la carte */
 .card-header {
-    border-radius: 10px 10px 0 0 !important;
+    border-radius: 12px 12px 0 0 !important;
+    background: linear-gradient(135deg, #007bff, #0056d6);
+    color: #fff;
 }
 
+/* Bouton principal */
 .btn-primary {
     background-color: #007bff;
     border-color: #007bff;
+    font-weight: 500;
+    padding: 0.5rem 1.4rem;
+    border-radius: 999px;
 }
 
 .btn-primary:hover {
     background-color: #0069d9;
     border-color: #0062cc;
+}
+
+/* Inputs & selects */
+.form-control,
+.form-select {
+    border-radius: 0.4rem;
+}
+
+/* Navbar */
+.navbar {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Texte d’infos en bas */
+.small {
+    color: #6c757d;
 }
