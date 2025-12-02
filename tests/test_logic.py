@@ -1,7 +1,4 @@
 # tests/test_logic.py
-import types
-import os
-import pytest
 from logic import _find_columns_by_header, apply_colors_to_file2
 
 def test_find_columns_by_header_ok(monkeypatch):

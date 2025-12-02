@@ -1,6 +1,5 @@
 # tests/test_app.py
 import io
-import os
 import pytest
 from app import app
 
