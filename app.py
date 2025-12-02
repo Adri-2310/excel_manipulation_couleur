@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, url_for, redirect
 import pandas as pd
 import os
 import time
@@ -133,12 +133,8 @@ def vider_dossier_uploads(delai=60):
     thread = threading.Thread(target=vider, daemon=True)
     thread.start()
 
-@app.route('/reset', methods=['GET'])
+@app.route('/reset', methods=['GET', 'POST'])
 def reset():
-    """
-    Supprime immédiatement tous les fichiers dans uploads
-    puis renvoie l'utilisateur vers le formulaire.
-    """
     try:
         fichiers = glob.glob(os.path.join(app.config['UPLOAD_FOLDER'], '*'))
         for fichier in fichiers:
@@ -148,8 +144,8 @@ def reset():
     except Exception:
         app.logger.error("Erreur lors du vidage manuel du dossier uploads", exc_info=True)
 
-    # Retour au formulaire
-    return render_template('index.html')
+    # Redirection vers la route index (URL "/")
+    return redirect(url_for('index'))
 
 
 @app.route('/get_sheets', methods=['POST'])
