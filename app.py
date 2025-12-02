@@ -133,6 +133,24 @@ def vider_dossier_uploads(delai=60):
     thread = threading.Thread(target=vider, daemon=True)
     thread.start()
 
+@app.route('/reset', methods=['GET'])
+def reset():
+    """
+    Supprime immédiatement tous les fichiers dans uploads
+    puis renvoie l'utilisateur vers le formulaire.
+    """
+    try:
+        fichiers = glob.glob(os.path.join(app.config['UPLOAD_FOLDER'], '*'))
+        for fichier in fichiers:
+            if os.path.isfile(fichier):
+                os.remove(fichier)
+        app.logger.info("Dossier %s vidé manuellement via /reset.", app.config['UPLOAD_FOLDER'])
+    except Exception:
+        app.logger.error("Erreur lors du vidage manuel du dossier uploads", exc_info=True)
+
+    # Retour au formulaire
+    return render_template('index.html')
+
 
 @app.route('/get_sheets', methods=['POST'])
 def get_sheets():

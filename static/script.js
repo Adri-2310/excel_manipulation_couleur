@@ -1,4 +1,4 @@
-function attachSheetLoader(fileInputSelector, sheetSelectSelector, sheetSectionSelector, enableSubmit) {
+function attachSheetLoader(fileInputSelector, sheetSelectSelector, sheetSectionSelector, enableSubmit, loaderSelector) {
     $(fileInputSelector).change(function() {
         console.log("Fichier sélectionné sur", fileInputSelector);
         var fileInput = $(fileInputSelector)[0];
@@ -12,6 +12,11 @@ function attachSheetLoader(fileInputSelector, sheetSelectSelector, sheetSectionS
         // IMPORTANT : le backend attend le champ "file"
         formData.append('file', file);
 
+        // Afficher le loader
+        if (loaderSelector) {
+            $(loaderSelector).show();
+        }
+
         $.ajax({
             url: '/get_sheets',
             type: 'POST',
@@ -20,6 +25,12 @@ function attachSheetLoader(fileInputSelector, sheetSelectSelector, sheetSectionS
             contentType: false,
             success: function(response) {
                 console.log("Réponse du serveur pour", fileInputSelector, ":", response);
+
+                // Masquer le loader
+                if (loaderSelector) {
+                    $(loaderSelector).hide();
+                }
+
                 if (response.error) {
                     alert("Erreur : " + response.error);
                     return;
@@ -43,6 +54,12 @@ function attachSheetLoader(fileInputSelector, sheetSelectSelector, sheetSectionS
             },
             error: function(xhr, status, error) {
                 console.log("Erreur AJAX pour", fileInputSelector, ":", error);
+
+                // Masquer le loader même en cas d'erreur
+                if (loaderSelector) {
+                    $(loaderSelector).hide();
+                }
+
                 alert("Erreur lors de la lecture des feuilles : " + error);
             }
         });
@@ -52,9 +69,9 @@ function attachSheetLoader(fileInputSelector, sheetSelectSelector, sheetSectionS
 $(document).ready(function() {
     console.log("Document prêt.");
 
-    // Fichier source : active aussi le bouton "Téléverser"
-    attachSheetLoader('#file', '#sheet_name', '#sheet_selection', true);
+    // Fichier source : active aussi le bouton "Lancer le traitement"
+    attachSheetLoader('#file', '#sheet_name', '#sheet_selection', true, '#loader-source');
 
-    // Fichier cible : uniquement liste déroulante, sans toucher au bouton
-    attachSheetLoader('#file_target', '#sheet_name_target', '#sheet_selection_target', false);
+    // Fichier cible : uniquement liste déroulante
+    attachSheetLoader('#file_target', '#sheet_name_target', '#sheet_selection_target', false, '#loader-target');
 });
