@@ -6,6 +6,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: excel-couleur
+    expose:
+      - 5000
     ports:
       - "5000:5000"
     volumes:
@@ -25,9 +27,15 @@ services:
       coolify.managed: "true"
       coolify.autoUpdate: "true"
       com.centurylinklabs.watchtower.enable: "true"
+    networks:
+      - coolify
 
 volumes:
   uploads:
     driver: local
   logs:
     driver: local
+
+networks:
+  coolify:
+    external: true
