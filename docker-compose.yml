@@ -8,8 +8,6 @@ services:
     container_name: excel-couleur
     expose:
       - 5000
-    ports:
-      - "5000:5000"
     volumes:
       - uploads:/app/uploads
       - logs:/app/log
@@ -27,6 +25,7 @@ services:
       coolify.managed: "true"
       coolify.autoUpdate: "true"
       com.centurylinklabs.watchtower.enable: "true"
+      coolify.port: "5000"
     networks:
       - coolify
 
