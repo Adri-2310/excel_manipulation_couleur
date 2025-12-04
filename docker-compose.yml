@@ -17,10 +17,11 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 60s
     environment:
       - FLASK_ENV=production
       - PYTHONUNBUFFERED=1
+      - FLASK_DEBUG=0
     labels:
       coolify.managed: "true"
       coolify.autoUpdate: "true"
@@ -28,6 +29,8 @@ services:
       coolify.port: "5000"
     networks:
       - coolify
+    stdin_open: true
+    tty: true
 
 volumes:
   uploads:
