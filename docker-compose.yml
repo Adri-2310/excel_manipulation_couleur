@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  excel-app:
+    build: .
+    container_name: excel-couleur
+    ports:
+      - "5000:5000"
+    volumes:
+      # Conserver les fichiers générés et les logs sur le NAS
+      - ./uploads:/app/uploads
+      - ./log:/app/log
+    restart: unless-stopped
