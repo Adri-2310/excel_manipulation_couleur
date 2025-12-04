@@ -1,13 +1,33 @@
 version: "3.8"
 
 services:
-  excel-app:
-    build: .
+  main:
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: excel-couleur
     ports:
       - "5000:5000"
     volumes:
-      # Conserver les fichiers générés et les logs sur le NAS
-      - ./uploads:/app/uploads
-      - ./log:/app/log
+      - uploads:/app/uploads
+      - logs:/app/log
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    environment:
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    labels:
+      coolify.managed: "true"
+      coolify.autoUpdate: "true"
+      com.centurylinklabs.watchtower.enable: "true"
+
+volumes:
+  uploads:
+    driver: local
+  logs:
+    driver: local
