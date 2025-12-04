@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  main:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: excel-couleur
+    expose:
+      - 5000
+    volumes:
+      - uploads:/app/uploads
+      - logs:/app/log
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    environment:
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+      - FLASK_DEBUG=0
+    labels:
+      coolify.managed: "true"
+      coolify.autoUpdate: "true"
+      com.centurylinklabs.watchtower.enable: "true"
+      coolify.port: "5000"
+    networks:
+      - coolify
+    stdin_open: true
+    tty: true
+
+volumes:
+  uploads:
+    driver: local
+  logs:
+    driver: local
+
+networks:
+  coolify:
+    external: true
