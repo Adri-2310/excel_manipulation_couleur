@@ -18,4 +18,4 @@ RUN mkdir -p uploads log
 EXPOSE 5000
 
 # Lancer l'app Flask via gunicorn (objet app dans app.py) [1]
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "-w", "3", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
